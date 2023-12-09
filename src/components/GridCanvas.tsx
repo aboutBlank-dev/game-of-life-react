@@ -2,14 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 import { GridCell } from "../Game";
 
 type Props = {
-  reservedBottomSpace: number;
   gridSize: number;
   gridCells: GridCell[][];
   onCellClicked: (x: number, y: number) => void;
 };
 
 function Canvas(
-  { reservedBottomSpace, gridSize, gridCells, onCellClicked }: Props,
+  { gridSize, gridCells, onCellClicked }: Props,
   props: React.CanvasHTMLAttributes<HTMLCanvasElement>
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -33,8 +32,7 @@ function Canvas(
         const cell = gridCells[i][j];
         ctx.fillStyle = cell.alive ? "black" : "white";
 
-        if (cell.y * cellSize + cellSize > windowHeight - reservedBottomSpace)
-          continue;
+        if (cell.y * cellSize > windowHeight) continue;
         ctx.fillRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
         ctx.strokeRect(
           cell.x * cellSize,

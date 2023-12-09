@@ -92,8 +92,6 @@ function Game({}: Props) {
     generateInitialGrid(gridSize)
   );
 
-  const buttonContainerRef = useRef<HTMLDivElement>(null);
-
   const runSimulation = () => {
     if (!isRunning) {
       return;
@@ -157,15 +155,11 @@ function Game({}: Props) {
   return (
     <div className='w-full h-screen'>
       <Canvas
-        reservedBottomSpace={buttonContainerRef.current?.clientHeight || 0} 
         gridSize={gridSize}
         gridCells={gridCells}
         onCellClicked={onCellClicked}
       />
-      <div
-        ref={buttonContainerRef}
-        className='fixed bottom-0 flex flex-row space-x-8 w-full p-4 bg-slate-400'
-      >
+      <div className='fixed bottom-0 flex flex-row space-x-8 w-full p-4 bg-slate-400'>
         <button
           onClick={toggleSimulation}
           className={`select-none text-white font-bold py-2 px-4 border-b-4 rounded ${startStopStyle}`}
