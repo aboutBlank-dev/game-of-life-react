@@ -65,9 +65,9 @@ function Canvas(
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    for (let i = 0; i < gridCells.length; i++) {
-      for (let j = 0; j < gridCells[i].length; j++) {
-        const cell = gridCells[i][j];
+    for (let y = 0; y < gridCells.length; y++) {
+      for (let x = 0; x < gridCells[y].length; x++) {
+        const cell = gridCells[y][x];
         ctx.fillStyle = cell.alive ? "black" : "white";
 
         if (cell.y * cellSize > canvasContainerDimensions.height) continue;

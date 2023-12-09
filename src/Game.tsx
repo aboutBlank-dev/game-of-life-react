@@ -150,7 +150,7 @@ function Game({}: Props) {
           value={cellSize}
           onChange={(e) => setCellSize(Number(e.target.value))}
           step='1'
-          className='w-16 h-2 my-auto bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700'
+          className='rotate-180 w-16 h-2 my-auto bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700'
         />
       </div>
     </div>
@@ -173,14 +173,14 @@ function calculateLiveNeighbors(gridCells: GridCell[][], x: number, y: number) {
   ];
   for (let i = 0; i < dirs.length; i++) {
     const dir = dirs[i];
-    let y1 = y + dir[0];
-    let x1 = x + dir[1];
+    let x1 = x + dir[0];
+    let y1 = y + dir[1];
 
     if (
       x1 >= 0 &&
       y1 >= 0 &&
-      x1 < gridCells.length &&
       y1 < gridCells.length &&
+      x1 < gridCells[y1].length &&
       gridCells[y1][x1].alive
     ) {
       liveNeighbors++;
@@ -192,12 +192,12 @@ function calculateLiveNeighbors(gridCells: GridCell[][], x: number, y: number) {
 
 function generateEmptyGrid(gridWidth: number, gridHeight: number) {
   const newGrid: GridCell[][] = [];
-  for (let i = 0; i < gridWidth; i++) {
+  for (let i = 0; i < gridHeight; i++) {
     newGrid[i] = [];
-    for (let j = 0; j < gridHeight; j++) {
+    for (let j = 0; j < gridWidth; j++) {
       newGrid[i][j] = {
-        x: i,
-        y: j,
+        x: j,
+        y: i,
         alive: false,
       };
     }
@@ -224,10 +224,10 @@ function changeGridSize(
 ): GridCell[][] {
   const newGrid: GridCell[][] = generateEmptyGrid(gridWidth, gridHeight);
 
-  for (let x = 0; x < originalGrid.length; x++) {
-    for (let y = 0; y < originalGrid[x].length; y++) {
+  for (let y = 0; y < originalGrid.length; y++) {
+    for (let x = 0; x < originalGrid[y].length; x++) {
       if (x < gridWidth && y < gridHeight) {
-        newGrid[x][y] = originalGrid[x][y];
+        newGrid[y][x] = originalGrid[y][x];
       }
     }
   }
