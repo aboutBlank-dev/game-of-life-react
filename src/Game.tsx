@@ -85,11 +85,6 @@ function Game({}: Props) {
   const [gridCells, setGridCells] = useState<GridCell[][]>(
     generateInitialGrid(gridSize)
   );
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const [canvasContainerDimensions, setCanvasContainerDimensions] = useState({
-    width: 0,
-    height: 0,
-  });
 
   const runSimulation = () => {
     if (!isRunning) {
@@ -125,21 +120,6 @@ function Game({}: Props) {
     setGridCells(changeGridSize(gridCells, gridSize));
   }, [gridSize]);
 
-  useEffect(() => {
-    const updateCanvasContainerDimensions = () => {
-      setCanvasContainerDimensions({
-        width: canvasContainerRef.current?.clientWidth || 0,
-        height: canvasContainerRef.current?.clientHeight || 0,
-      });
-    };
-
-    window.addEventListener("resize", updateCanvasContainerDimensions);
-
-    return () => {
-      window.removeEventListener("resize", updateCanvasContainerDimensions);
-    };
-  });
-
   const onCellClicked = (x: number, y: number) => {
     //create copy of gridCells
     const newGrid = [...gridCells];
@@ -169,10 +149,8 @@ function Game({}: Props) {
   return (
     // make a div that takes up the full height of the screen
     <div className='flex flex-col h-screen'>
-      <div ref={canvasContainerRef} className='grow'>
+      <div className='grow'>
         <Canvas
-          containerWidth={canvasContainerRef.current?.clientWidth || 0}
-          containerHeight={canvasContainerRef.current?.clientHeight || 0}
           gridSize={gridSize}
           gridCells={gridCells}
           onCellClicked={onCellClicked}
