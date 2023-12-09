@@ -3,10 +3,11 @@ import { GridCell } from "../Game";
 
 type Props = {
   gridCells: GridCell[][];
+  onCellClicked: (x: number, y: number) => void;
 };
 
 function Canvas(
-  { gridCells }: Props,
+  { gridCells, onCellClicked }: Props,
   props: React.CanvasHTMLAttributes<HTMLCanvasElement>
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -53,11 +54,34 @@ function Canvas(
     };
   });
 
+  const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const mouseX = e.clientX - canvasRef.current!.getBoundingClientRect().left;
+    const mouseY = e.clientY - canvasRef.current!.getBoundingClientRect().top;
+
+    const cellSize =
+      (windowWidth > windowHeight ? windowWidth : windowHeight) / gridSize;
+
+    for (let y = 0; y < gridCells.length; y++) {
+      for (let x = 0; x < gridCells[y].length; x++) {
+        const cell = gridCells[y][x];
+        if (
+          mouseX >= cell.x * cellSize &&
+          mouseX <= cell.x * cellSize + cellSize &&
+          mouseY >= cell.y * cellSize &&
+          mouseY <= cell.y * cellSize + cellSize
+        ) {
+          onCellClicked(x, y);
+        }
+      }
+    }
+  };
+
   return (
     <canvas
       ref={canvasRef}
       width={windowWidth}
       height={windowHeight}
+      onClick={handleClick}
       {...props}
     />
   );

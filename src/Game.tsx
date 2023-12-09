@@ -106,9 +106,15 @@ function Game({}: Props) {
     };
   });
 
+  const onCellClicked = (x: number, y: number) => {
+    //create copy of gridCells
+    const newGrid = [...gridCells];
+    newGrid[y][x].alive = !newGrid[y][x].alive;
+    setGridCells(newGrid);
+  };
   return (
     <div className='w-full h-screen'>
-      <Canvas gridCells={gridCells} />
+      <Canvas gridCells={gridCells} onCellClicked={onCellClicked} />
       <button
         onClick={() => {
           setIsRunning(!isRunning);
