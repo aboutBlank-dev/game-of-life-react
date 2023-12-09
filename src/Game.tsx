@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Canvas from "./components/GridCanvas";
 
 type Props = {};
-
-let timeoutHandler: number | null = null;
 
 export type GridCell = {
   x: number;
@@ -69,12 +67,32 @@ function generateInitialGrid(gridSize: number) {
   return newGrid;
 }
 
+function changeGridSize(
+  originalGrid: GridCell[][],
+  gridSize: number
+): GridCell[][] {
+  const newGrid: GridCell[][] = generateEmptyGrid(gridSize);
+
+  for (let y = 0; y < originalGrid.length; y++) {
+    for (let x = 0; x < originalGrid[y].length; x++) {
+      if (x < gridSize && y < gridSize) {
+        newGrid[y][x] = originalGrid[y][x];
+      }
+    }
+  }
+
+  return newGrid;
+}
+
 function Game({}: Props) {
   const [isRunning, setIsRunning] = useState(false);
   const [simulationDelay, setSimulationDelay] = useState(100);
+  const [gridSize, setGridSize] = useState(20);
   const [gridCells, setGridCells] = useState<GridCell[][]>(
-    generateInitialGrid(20)
+    generateInitialGrid(gridSize)
   );
+
+  const buttonContainerRef = useRef<HTMLDivElement>(null);
 
   const runSimulation = () => {
     if (!isRunning) {
@@ -106,6 +124,10 @@ function Game({}: Props) {
     };
   });
 
+  useEffect(() => {
+    setGridCells(changeGridSize(gridCells, gridSize));
+  }, [gridSize]);
+
   const onCellClicked = (x: number, y: number) => {
     //create copy of gridCells
     const newGrid = [...gridCells];
@@ -134,26 +156,66 @@ function Game({}: Props) {
   }`;
   return (
     <div className='w-full h-screen'>
-      <Canvas gridCells={gridCells} onCellClicked={onCellClicked} />
-      <div className='flex flex-row space-x-8 w-full p-4'>
+      <Canvas
+        reservedBottomSpace={buttonContainerRef.current?.clientHeight || 0} 
+        gridSize={gridSize}
+        gridCells={gridCells}
+        onCellClicked={onCellClicked}
+      />
+      <div
+        ref={buttonContainerRef}
+        className='fixed bottom-0 flex flex-row space-x-8 w-full p-4 bg-slate-400'
+      >
         <button
           onClick={toggleSimulation}
-          className={`text-white font-bold py-2 px-4 border-b-4 rounded ${startStopStyle}`}
+          className={`select-none text-white font-bold py-2 px-4 border-b-4 rounded ${startStopStyle}`}
         >
           Start/Stop
         </button>
         <button
           onClick={clearGrid}
-          className='bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded'
+          className='select-none bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded'
         >
           Clear Grid
         </button>
         <button
           onClick={randomGrid}
-          className='bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded'
+          className='select-none bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded'
         >
           Random Grid
         </button>
+        <label
+          htmlFor='simulation-delay-range'
+          className='text-white font-bold py-2 px-4'
+        >
+          Simulation Speed
+        </label>
+        <input
+          id='simulation-delay-range'
+          type='range'
+          min='10'
+          max='1000'
+          value={simulationDelay}
+          onChange={(e) => setSimulationDelay(Number(e.target.value))}
+          step='1'
+          className='rotate-180 w-16 h-2 my-auto bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700'
+        />
+        <label
+          htmlFor='grid-size-range'
+          className='text-white font-bold py-2 px-4'
+        >
+          Grid Size
+        </label>
+        <input
+          id='grid-size-range'
+          type='range'
+          min='10'
+          max='100'
+          value={gridSize}
+          onChange={(e) => setGridSize(Number(e.target.value))}
+          step='1'
+          className='w-16 h-2 my-auto bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700'
+        />
       </div>
     </div>
   );
