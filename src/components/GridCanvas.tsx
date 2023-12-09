@@ -1,5 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
-import { GridCell } from "../Game";
+import React, { useEffect, useRef } from "react";
+
+export type GridCell = {
+  x: number;
+  y: number;
+  alive: boolean;
+};
 
 type Props = {
   containerWidth: number;

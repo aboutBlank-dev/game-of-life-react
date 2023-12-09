@@ -1,13 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import Canvas from "./components/GridCanvas";
+import Canvas, { GridCell } from "./components/GridCanvas";
 
 type Props = {};
-
-export type GridCell = {
-  x: number;
-  y: number;
-  alive: boolean;
-};
 
 function calculateLiveNeighbors(gridCells: GridCell[][], x: number, y: number) {
   let liveNeighbors = 0;
@@ -166,7 +160,7 @@ function Game({}: Props) {
     setGridCells(generateInitialGrid(gridCells.length));
     setIsRunning(false);
   };
-  ``;
+
   const startStopStyle = `${isRunning ? "bg-red-500" : "bg-green-500"} ${
     isRunning ? "hover:bg-red-400" : "hover:bg-green-400"
   } ${isRunning ? "border-red-700" : "border-green-700"} ${
