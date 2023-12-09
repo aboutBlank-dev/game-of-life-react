@@ -91,6 +91,11 @@ function Game({}: Props) {
   const [gridCells, setGridCells] = useState<GridCell[][]>(
     generateInitialGrid(gridSize)
   );
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [canvasContainerDimensions, setCanvasContainerDimensions] = useState({
+    width: 0,
+    height: 0,
+  });
 
   const runSimulation = () => {
     if (!isRunning) {
@@ -126,6 +131,21 @@ function Game({}: Props) {
     setGridCells(changeGridSize(gridCells, gridSize));
   }, [gridSize]);
 
+  useEffect(() => {
+    const updateCanvasContainerDimensions = () => {
+      setCanvasContainerDimensions({
+        width: canvasContainerRef.current?.clientWidth || 0,
+        height: canvasContainerRef.current?.clientHeight || 0,
+      });
+    };
+
+    window.addEventListener("resize", updateCanvasContainerDimensions);
+
+    return () => {
+      window.removeEventListener("resize", updateCanvasContainerDimensions);
+    };
+  });
+
   const onCellClicked = (x: number, y: number) => {
     //create copy of gridCells
     const newGrid = [...gridCells];
@@ -146,20 +166,25 @@ function Game({}: Props) {
     setGridCells(generateInitialGrid(gridCells.length));
     setIsRunning(false);
   };
-
+  ``;
   const startStopStyle = `${isRunning ? "bg-red-500" : "bg-green-500"} ${
     isRunning ? "hover:bg-red-400" : "hover:bg-green-400"
   } ${isRunning ? "border-red-700" : "border-green-700"} ${
     isRunning ? "hover:border-red-500" : "hover:border-green-500"
   }`;
   return (
-    <div className='w-full h-screen'>
-      <Canvas
-        gridSize={gridSize}
-        gridCells={gridCells}
-        onCellClicked={onCellClicked}
-      />
-      <div className='fixed bottom-0 flex flex-row space-x-8 w-full p-4 bg-slate-400'>
+    // make a div that takes up the full height of the screen
+    <div className='flex flex-col h-screen'>
+      <div ref={canvasContainerRef} className='grow'>
+        <Canvas
+          containerWidth={canvasContainerRef.current?.clientWidth || 0}
+          containerHeight={canvasContainerRef.current?.clientHeight || 0}
+          gridSize={gridSize}
+          gridCells={gridCells}
+          onCellClicked={onCellClicked}
+        />
+      </div>
+      <div className='flex flex-row space-x-8 w-full p-4 bg-slate-400'>
         <button
           onClick={toggleSimulation}
           className={`select-none text-white font-bold py-2 px-4 border-b-4 rounded ${startStopStyle}`}
