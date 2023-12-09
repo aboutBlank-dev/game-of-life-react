@@ -7,13 +7,14 @@ export type GridCell = {
 };
 
 type Props = {
-  gridSize: number;
+  cellSize: number;
   gridCells: GridCell[][];
   onCellClicked: (x: number, y: number) => void;
+  onGridSizeChanged: (width: number, height: number) => void;
 };
 
 function Canvas(
-  { gridSize, gridCells, onCellClicked }: Props,
+  { cellSize, gridCells, onCellClicked, onGridSizeChanged }: Props,
   props: React.CanvasHTMLAttributes<HTMLCanvasElement>
 ) {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -48,6 +49,13 @@ function Canvas(
     };
   });
 
+  useEffect(() => {
+    //calculate how many cells fit in the canvas container
+    const width = Math.floor(canvasContainerDimensions.width / cellSize);
+    const height = Math.floor(canvasContainerDimensions.height / cellSize);
+    onGridSizeChanged(width, height);
+  }, [canvasContainerDimensions, cellSize]);
+
   //Draw grid
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -56,11 +64,6 @@ function Canvas(
     if (!canvas || !ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const cellSize =
-      (canvasContainerDimensions.width > canvasContainerDimensions.height
-        ? canvasContainerDimensions.width
-        : canvasContainerDimensions.height) / gridSize;
 
     for (let i = 0; i < gridCells.length; i++) {
       for (let j = 0; j < gridCells[i].length; j++) {
@@ -77,16 +80,11 @@ function Canvas(
         );
       }
     }
-  }, [canvasContainerDimensions, gridCells, gridSize]);
+  }, [canvasContainerDimensions, gridCells, cellSize]);
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const mouseX = e.clientX - canvasRef.current!.getBoundingClientRect().left;
     const mouseY = e.clientY - canvasRef.current!.getBoundingClientRect().top;
-
-    const cellSize =
-      (canvasContainerDimensions.width > canvasContainerDimensions.height
-        ? canvasContainerDimensions.width
-        : canvasContainerDimensions.height) / gridSize;
 
     for (let y = 0; y < gridCells.length; y++) {
       for (let x = 0; x < gridCells[y].length; x++) {
@@ -98,23 +96,23 @@ function Canvas(
           mouseY <= cell.y * cellSize + cellSize
         ) {
           onCellClicked(x, y);
+          return;
         }
       }
     }
   };
 
-  console.log(
-    "rendering canvas with widht/height",
-    canvasContainerDimensions.width,
-    canvasContainerDimensions.height
-  );
+  const finalWidth =
+    Math.floor(canvasContainerDimensions.width / cellSize) * cellSize;
+  const finalHeight =
+    Math.floor(canvasContainerDimensions.height / cellSize) * cellSize;
   return (
-    <div className='w-full h-full' ref={canvasContainerRef}>
+    <div className='relative w-full h-full' ref={canvasContainerRef}>
       <canvas
-        className='inset-0 mx-auto my-auto'
+        className='absolute inset-0 my-auto mx-auto'
         ref={canvasRef}
-        width={canvasContainerDimensions.width}
-        height={canvasContainerDimensions.height}
+        width={finalWidth}
+        height={finalHeight}
         onClick={handleClick}
         {...props}
       />

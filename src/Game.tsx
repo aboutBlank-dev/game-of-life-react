@@ -1,97 +1,56 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Canvas, { GridCell } from "./components/GridCanvas";
 
 type Props = {};
 
-function calculateLiveNeighbors(gridCells: GridCell[][], x: number, y: number) {
-  let liveNeighbors = 0;
-  const dirs = [
-    [-1, -1],
-    [-1, 0],
-    [-1, 1],
-    [0, 1],
-    [1, 1],
-    [1, 0],
-    [1, -1],
-    [0, -1],
-  ];
-  for (let i = 0; i < dirs.length; i++) {
-    const dir = dirs[i];
-    let y1 = y + dir[0];
-    let x1 = x + dir[1];
-
-    if (
-      x1 >= 0 &&
-      y1 >= 0 &&
-      x1 < gridCells.length &&
-      y1 < gridCells.length &&
-      gridCells[y1][x1].alive
-    ) {
-      liveNeighbors++;
-    }
-  }
-
-  return liveNeighbors;
-}
-
-function generateEmptyGrid(gridSize: number) {
-  const newGrid: GridCell[][] = [];
-  for (let i = 0; i < gridSize; i++) {
-    newGrid[i] = [];
-    for (let j = 0; j < gridSize; j++) {
-      newGrid[i][j] = {
-        x: i,
-        y: j,
-        alive: false,
-      };
-    }
-  }
-  return newGrid;
-}
-
-function generateInitialGrid(gridSize: number) {
-  const newGrid: GridCell[][] = generateEmptyGrid(gridSize);
-  for (let y = 0; y < newGrid.length; y++) {
-    for (let x = 0; x < newGrid[y].length; x++) {
-      if (Math.random() < 0.5) {
-        newGrid[y][x].alive = Math.random() < 0.5;
-      }
-    }
-  }
-  return newGrid;
-}
-
-function changeGridSize(
-  originalGrid: GridCell[][],
-  gridSize: number
-): GridCell[][] {
-  const newGrid: GridCell[][] = generateEmptyGrid(gridSize);
-
-  for (let y = 0; y < originalGrid.length; y++) {
-    for (let x = 0; x < originalGrid[y].length; x++) {
-      if (x < gridSize && y < gridSize) {
-        newGrid[y][x] = originalGrid[y][x];
-      }
-    }
-  }
-
-  return newGrid;
-}
-
 function Game({}: Props) {
   const [isRunning, setIsRunning] = useState(false);
   const [simulationDelay, setSimulationDelay] = useState(100);
-  const [gridSize, setGridSize] = useState(20);
+  const [cellSize, setCellSize] = useState(20);
+  const [gridDimensions, setGridDimensions] = useState({
+    width: 0,
+    height: 0,
+  });
   const [gridCells, setGridCells] = useState<GridCell[][]>(
-    generateInitialGrid(gridSize)
+    generateRandomGrid(gridDimensions.width, gridDimensions.height)
   );
+
+  //Run simulation loop
+  useEffect(() => {
+    if (!isRunning) return;
+
+    const interval = setInterval(runSimulation, simulationDelay);
+    return () => {
+      clearInterval(interval);
+    };
+  });
+
+  //Update grid Cells
+  useEffect(() => {
+    setGridCells(
+      changeGridSize(gridCells, gridDimensions.width, gridDimensions.height)
+    );
+  }, [gridDimensions]);
+
+  const onCellClicked = (x: number, y: number) => {
+    const newGrid = [...gridCells]; //copy grid
+    newGrid[y][x].alive = !newGrid[y][x].alive;
+    setGridCells(newGrid);
+  };
+
+  const onGridSizeChanged = (width: number, height: number) => {
+    setGridDimensions({ width, height });
+  };
 
   const runSimulation = () => {
     if (!isRunning) {
       return;
     }
 
-    const newGrid = generateEmptyGrid(gridCells.length);
+    const newGrid = generateEmptyGrid(
+      gridDimensions.width,
+      gridDimensions.height
+    );
     for (let y = 0; y < gridCells.length; y++) {
       for (let x = 0; x < gridCells[y].length; x++) {
         const cell = gridCells[y][x];
@@ -107,37 +66,21 @@ function Game({}: Props) {
     setGridCells(newGrid);
   };
 
-  useEffect(() => {
-    if (!isRunning) return;
-
-    const interval = setInterval(runSimulation, simulationDelay);
-    return () => {
-      clearInterval(interval);
-    };
-  });
-
-  useEffect(() => {
-    setGridCells(changeGridSize(gridCells, gridSize));
-  }, [gridSize]);
-
-  const onCellClicked = (x: number, y: number) => {
-    //create copy of gridCells
-    const newGrid = [...gridCells];
-    newGrid[y][x].alive = !newGrid[y][x].alive;
-    setGridCells(newGrid);
-  };
-
   const toggleSimulation = () => {
     setIsRunning(!isRunning);
   };
 
   const clearGrid = () => {
-    setGridCells(generateEmptyGrid(gridCells.length));
+    setGridCells(
+      generateEmptyGrid(gridDimensions.width, gridDimensions.height)
+    );
     setIsRunning(false);
   };
 
   const randomGrid = () => {
-    setGridCells(generateInitialGrid(gridCells.length));
+    setGridCells(
+      generateRandomGrid(gridDimensions.width, gridDimensions.height)
+    );
     setIsRunning(false);
   };
 
@@ -146,14 +89,16 @@ function Game({}: Props) {
   } ${isRunning ? "border-red-700" : "border-green-700"} ${
     isRunning ? "hover:border-red-500" : "hover:border-green-500"
   }`;
+
   return (
     // make a div that takes up the full height of the screen
     <div className='flex flex-col h-screen'>
       <div className='grow'>
         <Canvas
-          gridSize={gridSize}
+          cellSize={cellSize}
           gridCells={gridCells}
           onCellClicked={onCellClicked}
+          onGridSizeChanged={onGridSizeChanged}
         />
       </div>
       <div className='flex flex-row space-x-8 w-full p-4 bg-slate-400'>
@@ -202,8 +147,8 @@ function Game({}: Props) {
           type='range'
           min='10'
           max='100'
-          value={gridSize}
-          onChange={(e) => setGridSize(Number(e.target.value))}
+          value={cellSize}
+          onChange={(e) => setCellSize(Number(e.target.value))}
           step='1'
           className='w-16 h-2 my-auto bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700'
         />
@@ -213,3 +158,79 @@ function Game({}: Props) {
 }
 
 export default Game;
+
+function calculateLiveNeighbors(gridCells: GridCell[][], x: number, y: number) {
+  let liveNeighbors = 0;
+  const dirs = [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, 1],
+    [1, 1],
+    [1, 0],
+    [1, -1],
+    [0, -1],
+  ];
+  for (let i = 0; i < dirs.length; i++) {
+    const dir = dirs[i];
+    let y1 = y + dir[0];
+    let x1 = x + dir[1];
+
+    if (
+      x1 >= 0 &&
+      y1 >= 0 &&
+      x1 < gridCells.length &&
+      y1 < gridCells.length &&
+      gridCells[y1][x1].alive
+    ) {
+      liveNeighbors++;
+    }
+  }
+
+  return liveNeighbors;
+}
+
+function generateEmptyGrid(gridWidth: number, gridHeight: number) {
+  const newGrid: GridCell[][] = [];
+  for (let i = 0; i < gridWidth; i++) {
+    newGrid[i] = [];
+    for (let j = 0; j < gridHeight; j++) {
+      newGrid[i][j] = {
+        x: i,
+        y: j,
+        alive: false,
+      };
+    }
+  }
+  return newGrid;
+}
+
+function generateRandomGrid(gridWidth: number, gridHeight: number) {
+  const newGrid: GridCell[][] = generateEmptyGrid(gridWidth, gridHeight);
+  for (let y = 0; y < newGrid.length; y++) {
+    for (let x = 0; x < newGrid[y].length; x++) {
+      if (Math.random() < 0.5) {
+        newGrid[y][x].alive = Math.random() < 0.5;
+      }
+    }
+  }
+  return newGrid;
+}
+
+function changeGridSize(
+  originalGrid: GridCell[][],
+  gridWidth: number,
+  gridHeight: number
+): GridCell[][] {
+  const newGrid: GridCell[][] = generateEmptyGrid(gridWidth, gridHeight);
+
+  for (let x = 0; x < originalGrid.length; x++) {
+    for (let y = 0; y < originalGrid[x].length; y++) {
+      if (x < gridWidth && y < gridHeight) {
+        newGrid[x][y] = originalGrid[x][y];
+      }
+    }
+  }
+
+  return newGrid;
+}
