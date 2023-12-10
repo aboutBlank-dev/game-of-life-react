@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from "react";
 export type GridCell = {
   x: number;
   y: number;
-  alive: boolean;
 };
 
 type Props = {
@@ -11,10 +10,17 @@ type Props = {
   gridCells: GridCell[][];
   onCellClicked: (x: number, y: number) => void;
   onGridSizeChanged: (width: number, height: number) => void;
+  onCellWillBeDrawn: (cell: GridCell, ctx: CanvasRenderingContext2D) => void;
 };
 
 function Canvas(
-  { cellSize, gridCells, onCellClicked, onGridSizeChanged }: Props,
+  {
+    cellSize,
+    gridCells,
+    onCellClicked,
+    onGridSizeChanged,
+    onCellWillBeDrawn,
+  }: Props,
   props: React.CanvasHTMLAttributes<HTMLCanvasElement>
 ) {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -68,16 +74,10 @@ function Canvas(
     for (let y = 0; y < gridCells.length; y++) {
       for (let x = 0; x < gridCells[y].length; x++) {
         const cell = gridCells[y][x];
-        ctx.fillStyle = cell.alive ? "black" : "white";
 
         if (cell.y * cellSize > canvasContainerDimensions.height) continue;
-        ctx.fillRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
-        ctx.strokeRect(
-          cell.x * cellSize,
-          cell.y * cellSize,
-          cellSize,
-          cellSize
-        );
+
+        onCellWillBeDrawn(cell, ctx);
       }
     }
   }, [canvasContainerDimensions, gridCells, cellSize]);

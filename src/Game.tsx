@@ -3,6 +3,10 @@ import Canvas, { GridCell } from "./components/GridCanvas";
 
 type Props = {};
 
+interface GameCell extends GridCell {
+  alive: boolean;
+}
+
 function Game({}: Props) {
   const [isRunning, setIsRunning] = useState(false);
   const [simulationDelay, setSimulationDelay] = useState(100);
@@ -11,7 +15,7 @@ function Game({}: Props) {
     width: 0,
     height: 0,
   });
-  const [gridCells, setGridCells] = useState<GridCell[][]>(
+  const [gridCells, setGridCells] = useState<GameCell[][]>(
     generateRandomGrid(gridDimensions.width, gridDimensions.height)
   );
 
@@ -40,6 +44,13 @@ function Game({}: Props) {
 
   const onGridSizeChanged = (width: number, height: number) => {
     setGridDimensions({ width, height });
+  };
+
+  const drawCell = (gridCell: GridCell, ctx: CanvasRenderingContext2D) => {
+    const cell: GameCell = gridCells[gridCell.y][gridCell.x];
+    ctx.fillStyle = cell.alive ? "black" : "white";
+    ctx.fillRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
+    ctx.strokeRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
   };
 
   const runSimulation = () => {
@@ -99,6 +110,7 @@ function Game({}: Props) {
           gridCells={gridCells}
           onCellClicked={onCellClicked}
           onGridSizeChanged={onGridSizeChanged}
+          onCellWillBeDrawn={drawCell}
         />
       </div>
       <div className='flex flex-row space-x-8 w-full p-4 bg-slate-400'>
@@ -159,7 +171,7 @@ function Game({}: Props) {
 
 export default Game;
 
-function calculateLiveNeighbors(gridCells: GridCell[][], x: number, y: number) {
+function calculateLiveNeighbors(gridCells: GameCell[][], x: number, y: number) {
   let liveNeighbors = 0;
   const dirs = [
     [-1, -1],
@@ -191,7 +203,7 @@ function calculateLiveNeighbors(gridCells: GridCell[][], x: number, y: number) {
 }
 
 function generateEmptyGrid(gridWidth: number, gridHeight: number) {
-  const newGrid: GridCell[][] = [];
+  const newGrid: GameCell[][] = [];
   for (let i = 0; i < gridHeight; i++) {
     newGrid[i] = [];
     for (let j = 0; j < gridWidth; j++) {
@@ -206,7 +218,7 @@ function generateEmptyGrid(gridWidth: number, gridHeight: number) {
 }
 
 function generateRandomGrid(gridWidth: number, gridHeight: number) {
-  const newGrid: GridCell[][] = generateEmptyGrid(gridWidth, gridHeight);
+  const newGrid: GameCell[][] = generateEmptyGrid(gridWidth, gridHeight);
   for (let y = 0; y < newGrid.length; y++) {
     for (let x = 0; x < newGrid[y].length; x++) {
       if (Math.random() < 0.5) {
@@ -218,11 +230,11 @@ function generateRandomGrid(gridWidth: number, gridHeight: number) {
 }
 
 function changeGridSize(
-  originalGrid: GridCell[][],
+  originalGrid: GameCell[][],
   gridWidth: number,
   gridHeight: number
-): GridCell[][] {
-  const newGrid: GridCell[][] = generateEmptyGrid(gridWidth, gridHeight);
+): GameCell[][] {
+  const newGrid: GameCell[][] = generateEmptyGrid(gridWidth, gridHeight);
 
   for (let y = 0; y < originalGrid.length; y++) {
     for (let x = 0; x < originalGrid[y].length; x++) {
