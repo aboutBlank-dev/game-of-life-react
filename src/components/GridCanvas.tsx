@@ -31,14 +31,6 @@ function Canvas(
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Set canvas container dimensions on mount
-  useEffect(() => {
-    setCanvasContainerDimensions({
-      width: canvasContainerRef.current?.clientWidth || 0,
-      height: canvasContainerRef.current?.clientHeight || 0,
-    });
-  }, [canvasContainerRef]);
-
   // Set canvas container dimensions on resize
   useEffect(() => {
     const updateCanvasContainerDimensions = () => {
@@ -55,6 +47,14 @@ function Canvas(
     };
   });
 
+  // Set canvas container dimensions on mount
+  useEffect(() => {
+    setCanvasContainerDimensions({
+      width: canvasContainerRef.current?.clientWidth || 0,
+      height: canvasContainerRef.current?.clientHeight || 0,
+    });
+  }, [canvasContainerRef]);
+
   useEffect(() => {
     //calculate how many cells fit in the canvas container
     const width = Math.floor(canvasContainerDimensions.width / cellSize);
@@ -64,23 +64,36 @@ function Canvas(
 
   //Draw grid
   useEffect(() => {
+    if (gridCells.length === 0) return;
+
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
 
     if (!canvas || !ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     for (let y = 0; y < gridCells.length; y++) {
       for (let x = 0; x < gridCells[y].length; x++) {
         const cell = gridCells[y][x];
 
-        if (cell.y * cellSize > canvasContainerDimensions.height) continue;
-
         onCellWillBeDrawn(cell, ctx);
       }
     }
-  }, [canvasContainerDimensions, gridCells, cellSize]);
+
+    const height = gridCells.length * cellSize;
+    const width = gridCells[0].length * cellSize;
+    //Draw vertical lines
+    for (let x = 0; x <= width; x += cellSize) {
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+    }
+    //Draw horizontal lines
+    for (let y = 0; y <= height; y += cellSize) {
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+    }
+    ctx.strokeStyle = "black";
+    ctx.stroke();
+  }, [gridCells]);
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const mouseX = e.clientX - canvasRef.current!.getBoundingClientRect().left;

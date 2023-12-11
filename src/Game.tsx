@@ -50,7 +50,6 @@ function Game({}: Props) {
     const cell: GameCell = gridCells[gridCell.y][gridCell.x];
     ctx.fillStyle = cell.alive ? "black" : "white";
     ctx.fillRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
-    ctx.strokeRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
   };
 
   const runSimulation = () => {
