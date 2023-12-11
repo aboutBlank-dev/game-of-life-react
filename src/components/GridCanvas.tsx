@@ -33,6 +33,7 @@ function Canvas({
 
   //For Panning/Dragging
   const isMouseDown = useRef(false);
+  const mouseMoved = useRef(false);
   const startMousePosition = useRef({ x: 0, y: 0 });
   const canvasOffset = useRef({ x: 0, y: 0 });
 
@@ -147,6 +148,11 @@ function Canvas({
   };
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (mouseMoved.current) {
+      mouseMoved.current = false;
+      return;
+    }
+
     const mouseX = e.clientX - canvasRef.current!.getBoundingClientRect().left;
     const mouseY = e.clientY - canvasRef.current!.getBoundingClientRect().top;
 
@@ -210,6 +216,8 @@ function Canvas({
       y: offsetY - gridOffsetY,
     };
     isMouseDown.current = false;
+
+    drawGrid();
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -217,6 +225,8 @@ function Canvas({
     if (!isMouseDown.current) {
       return;
     }
+
+    mouseMoved.current = true;
 
     // tell the browser we're handling this event
     e.preventDefault();
