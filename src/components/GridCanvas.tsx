@@ -194,20 +194,21 @@ function Canvas({
     isMouseDown.current = true;
   };
 
-  const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    // tell the browser we're handling this event
+  const handleDragStop = (e: React.MouseEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
-    isMouseDown.current = false;
-  };
+    //Make sure that the grid offset is a multiple of the cell size
+    const offsetX = canvasOffset.current.x;
+    const offsetY = canvasOffset.current.y;
 
-  const handleMouseOut = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    // tell the browser we're handling this event
-    e.preventDefault();
-    e.stopPropagation();
+    const gridOffsetX = offsetX % cellSize;
+    const gridOffsetY = offsetY % cellSize;
 
-    // clear the isDragging flag
+    canvasOffset.current = {
+      x: offsetX - gridOffsetX,
+      y: offsetY - gridOffsetY,
+    };
     isMouseDown.current = false;
   };
 
@@ -264,8 +265,8 @@ function Canvas({
         onClick={handleClick}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseOut={handleMouseOut}
+        onMouseUp={handleDragStop}
+        onMouseOut={handleDragStop}
       />
     </div>
   );

@@ -10,7 +10,7 @@ interface GameCell extends GridCell {
 function Game({}: Props) {
   const [isRunning, setIsRunning] = useState(false);
   const [simulationDelay, setSimulationDelay] = useState(100);
-  const [cellSize, setCellSize] = useState(20);
+  const [cellSize, setCellSize] = useState(30);
   const [gridIndexes, setGridIndexes] = useState({
     startX: 0,
     startY: 0,
