@@ -131,12 +131,12 @@ function Canvas({
     const gridOffsetY = offsetY % cellSize;
 
     //grid lines
-    for (let x = gridOffsetX; x < width; x += cellSize) {
+    for (let x = gridOffsetX; x <= width; x += cellSize) {
       ctx.moveTo(x, 0);
       ctx.lineTo(x, height);
     }
 
-    for (let y = gridOffsetY; y < height; y += cellSize) {
+    for (let y = gridOffsetY; y <= height; y += cellSize) {
       ctx.moveTo(0, y);
       ctx.lineTo(width, y);
     }

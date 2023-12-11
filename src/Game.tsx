@@ -200,7 +200,7 @@ function Game({}: Props) {
         <input
           id='grid-size-range'
           type='range'
-          min='10'
+          min='25'
           max='100'
           value={cellSize}
           onChange={(e) => setCellSize(Number(e.target.value))}
