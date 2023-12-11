@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 
 export type GridCell = {
   x: number;
@@ -7,22 +7,23 @@ export type GridCell = {
 
 type Props = {
   cellSize: number;
-  gridCells: GridCell[][];
   onCellClicked: (x: number, y: number) => void;
-  onGridSizeChanged: (width: number, height: number) => void;
+  onVisibleGridIndexesChanged: (
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number
+  ) => void;
   setCellStyle: (cell: GridCell, ctx: CanvasRenderingContext2D) => void;
 };
 
-function Canvas(
-  {
-    cellSize,
-    gridCells,
-    onCellClicked,
-    onGridSizeChanged,
-    setCellStyle,
-  }: Props,
-  props: React.CanvasHTMLAttributes<HTMLCanvasElement>
-) {
+//also allow the parent to pass in the html id of the canvas
+function Canvas({
+  cellSize,
+  onCellClicked,
+  onVisibleGridIndexesChanged,
+  setCellStyle,
+}: Props) {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [canvasContainerDimensions, setCanvasContainerDimensions] = useState({
     width: 0,
@@ -44,11 +45,8 @@ function Canvas(
   }, [canvasContainerRef]);
 
   useEffect(() => {
-    //calculate how many cells fit in the canvas container
-    const width = Math.floor(canvasContainerDimensions.width / cellSize);
-    const height = Math.floor(canvasContainerDimensions.height / cellSize);
-    onGridSizeChanged(width, height);
-  }, [canvasContainerDimensions, cellSize]);
+    drawGrid();
+  }, [canvasRef]);
 
   // Set canvas container dimensions on resize
   useEffect(() => {
@@ -66,14 +64,26 @@ function Canvas(
     };
   });
 
-  //Draw grid when changes happen
   useEffect(() => {
-    drawGrid();
-  }, [gridCells]);
+    const offsetX = canvasOffset.current.x;
+    const offsetY = canvasOffset.current.y;
+
+    let startX = Math.floor(-offsetX / cellSize);
+    let startY = Math.floor(-offsetY / cellSize);
+    startX = startX === -0 ? 0 : startX;
+    startY = startY === -0 ? 0 : startY;
+
+    const endX = Math.ceil(
+      (canvasContainerDimensions.width - offsetX) / cellSize
+    );
+    const endY = Math.ceil(
+      (canvasContainerDimensions.height - offsetY) / cellSize
+    );
+
+    onVisibleGridIndexesChanged(startX, startY, endX, endY);
+  }, [canvasContainerDimensions, cellSize, canvasOffset.current]);
 
   const drawGrid = () => {
-    if (gridCells.length === 0) return;
-
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
 
@@ -84,17 +94,12 @@ function Canvas(
     const offsetX = canvasOffset.current.x;
     const offsetY = canvasOffset.current.y;
 
-    //TODO: Optimize this
     //Only draw cells that are visible.
-    //Calculate the visible cells based on the canvas size and the cell size
-
-    //find all the hypothetical cells that are visible based on the inverse of the offset
-    const visibleCells: GridCell[] = [];
-
-    const startX = Math.floor(-offsetX / cellSize);
-    const startY = Math.floor(-offsetY / cellSize);
-
-    console.log(offsetX);
+    //Find all the hypothetical cells that are visible based on the offset
+    let startX = Math.floor(-offsetX / cellSize);
+    let startY = Math.floor(-offsetY / cellSize);
+    startX = startX === -0 ? 0 : startX;
+    startY = startY === -0 ? 0 : startY;
 
     const endX = Math.ceil(
       (canvasContainerDimensions.width - offsetX) / cellSize
@@ -103,36 +108,29 @@ function Canvas(
       (canvasContainerDimensions.height - offsetY) / cellSize
     );
 
+    //Draw the cells that are visible
     for (let y = startY; y < endY; y++) {
       for (let x = startX; x < endX; x++) {
-        visibleCells.push({ x, y });
+        const cellX = x * cellSize + offsetX;
+        const cellY = y * cellSize + offsetY;
+
+        setCellStyle({ x, y }, ctx);
+        ctx.fillRect(cellX, cellY, cellSize, cellSize);
       }
     }
 
-    //Draw the visible cells
-    visibleCells.forEach((cell) => {
-      const x = cell.x;
-      const y = cell.y;
-
-      const cellX = x * cellSize + offsetX;
-      const cellY = y * cellSize + offsetY;
-
-      ctx.beginPath();
-      ctx.rect(cellX, cellY, cellSize, cellSize);
-      setCellStyle({ x, y }, ctx);
-      ctx.fill();
-      ctx.closePath();
-    });
-
-    const height = gridCells.length * cellSize;
-    const width = gridCells[0].length * cellSize;
+    //height and width of the grid based on how many cells fit in the canvas container
+    const height =
+      Math.floor(canvasContainerDimensions.height / cellSize) * cellSize;
+    const width =
+      Math.floor(canvasContainerDimensions.width / cellSize) * cellSize;
 
     //Draw infinite vertical lines based on the panning
     ctx.beginPath();
     const gridOffsetX = offsetX % cellSize;
     const gridOffsetY = offsetY % cellSize;
 
-    //infinite grid lines
+    //grid lines
     for (let x = gridOffsetX; x < width; x += cellSize) {
       ctx.moveTo(x, 0);
       ctx.lineTo(x, height);
@@ -155,14 +153,26 @@ function Canvas(
     const offsetX = canvasOffset.current.x;
     const offsetY = canvasOffset.current.y;
 
-    for (let y = 0; y < gridCells.length; y++) {
-      for (let x = 0; x < gridCells[y].length; x++) {
-        const cell = gridCells[y][x];
+    //Only check the cells that are visible
+    let startX = Math.floor(-offsetX / cellSize);
+    let startY = Math.floor(-offsetY / cellSize);
+    startX = startX === -0 ? 0 : startX;
+    startY = startY === -0 ? 0 : startY;
+
+    const endX = Math.ceil(
+      (canvasContainerDimensions.width - offsetX) / cellSize
+    );
+    const endY = Math.ceil(
+      (canvasContainerDimensions.height - offsetY) / cellSize
+    );
+
+    for (let y = startY; y < endY; y++) {
+      for (let x = startX; x < endX; x++) {
         if (
-          mouseX >= cell.x * cellSize + offsetX &&
-          mouseX <= cell.x * cellSize + cellSize + offsetX &&
-          mouseY >= cell.y * cellSize + offsetY &&
-          mouseY <= cell.y * cellSize + cellSize + offsetY
+          mouseX >= x * cellSize + offsetX &&
+          mouseX <= x * cellSize + cellSize + offsetX &&
+          mouseY >= y * cellSize + offsetY &&
+          mouseY <= y * cellSize + cellSize + offsetY
         ) {
           onCellClicked(x, y);
           return;
@@ -238,6 +248,8 @@ function Canvas(
     drawGrid();
   };
 
+  drawGrid();
+  console.log("canvas render");
   const finalWidth =
     Math.floor(canvasContainerDimensions.width / cellSize) * cellSize;
   const finalHeight =
@@ -254,7 +266,6 @@ function Canvas(
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseOut={handleMouseOut}
-        {...props}
       />
     </div>
   );
