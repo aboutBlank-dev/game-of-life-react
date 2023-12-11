@@ -47,6 +47,11 @@ function Game({}: Props) {
   };
 
   const setCellStyle = (gridCell: GridCell, ctx: CanvasRenderingContext2D) => {
+    if (!gridCells[gridCell.y] || !gridCells[gridCell.y][gridCell.x]) {
+      ctx.fillStyle = "white";
+      return;
+    }
+
     const cell: GameCell = gridCells[gridCell.y][gridCell.x];
     ctx.fillStyle = cell.alive ? "black" : "white";
   };
@@ -108,7 +113,7 @@ function Game({}: Props) {
           gridCells={gridCells}
           onCellClicked={onCellClicked}
           onGridSizeChanged={onGridSizeChanged}
-          preCellDraw={setCellStyle}
+          setCellStyle={setCellStyle}
         />
       </div>
       <div className='flex flex-row space-x-8 w-full p-4 bg-slate-400'>

@@ -10,7 +10,7 @@ type Props = {
   gridCells: GridCell[][];
   onCellClicked: (x: number, y: number) => void;
   onGridSizeChanged: (width: number, height: number) => void;
-  preCellDraw: (cell: GridCell, ctx: CanvasRenderingContext2D) => void;
+  setCellStyle: (cell: GridCell, ctx: CanvasRenderingContext2D) => void;
 };
 
 function Canvas(
@@ -19,7 +19,7 @@ function Canvas(
     gridCells,
     onCellClicked,
     onGridSizeChanged,
-    preCellDraw: onCellWillBeDrawn,
+    setCellStyle,
   }: Props,
   props: React.CanvasHTMLAttributes<HTMLCanvasElement>
 ) {
@@ -69,7 +69,7 @@ function Canvas(
   //Draw grid when changes happen
   useEffect(() => {
     drawGrid();
-  }, [gridCells, canvasOffset]);
+  }, [gridCells]);
 
   const drawGrid = () => {
     if (gridCells.length === 0) return;
@@ -84,19 +84,45 @@ function Canvas(
     const offsetX = canvasOffset.current.x;
     const offsetY = canvasOffset.current.y;
 
-    for (let y = 0; y < gridCells.length; y++) {
-      for (let x = 0; x < gridCells[y].length; x++) {
-        const cell = gridCells[y][x];
+    //TODO: Optimize this
+    //Only draw cells that are visible.
+    //Calculate the visible cells based on the canvas size and the cell size
 
-        onCellWillBeDrawn(cell, ctx);
-        ctx.fillRect(
-          cell.x * cellSize + offsetX,
-          cell.y * cellSize + offsetY,
-          cellSize,
-          cellSize
-        );
+    //find all the hypothetical cells that are visible based on the inverse of the offset
+    const visibleCells: GridCell[] = [];
+
+    const startX = Math.floor(-offsetX / cellSize);
+    const startY = Math.floor(-offsetY / cellSize);
+
+    console.log(offsetX);
+
+    const endX = Math.ceil(
+      (canvasContainerDimensions.width - offsetX) / cellSize
+    );
+    const endY = Math.ceil(
+      (canvasContainerDimensions.height - offsetY) / cellSize
+    );
+
+    for (let y = startY; y < endY; y++) {
+      for (let x = startX; x < endX; x++) {
+        visibleCells.push({ x, y });
       }
     }
+
+    //Draw the visible cells
+    visibleCells.forEach((cell) => {
+      const x = cell.x;
+      const y = cell.y;
+
+      const cellX = x * cellSize + offsetX;
+      const cellY = y * cellSize + offsetY;
+
+      ctx.beginPath();
+      ctx.rect(cellX, cellY, cellSize, cellSize);
+      setCellStyle({ x, y }, ctx);
+      ctx.fill();
+      ctx.closePath();
+    });
 
     const height = gridCells.length * cellSize;
     const width = gridCells[0].length * cellSize;
@@ -151,8 +177,8 @@ function Canvas(
     e.stopPropagation();
 
     startMousePosition.current = {
-      x: e.clientX,
-      y: e.clientY,
+      x: e.clientX - canvasRef.current!.getBoundingClientRect().left,
+      y: e.clientY - canvasRef.current!.getBoundingClientRect().top,
     };
 
     isMouseDown.current = true;
@@ -186,8 +212,8 @@ function Canvas(
     e.stopPropagation();
 
     // get the current mouse position
-    const mouseX = e.clientX;
-    const mouseY = e.clientY;
+    const mouseX = e.clientX - canvasRef.current!.getBoundingClientRect().left;
+    const mouseY = e.clientY - canvasRef.current!.getBoundingClientRect().top;
 
     // dx & dy are the distance the mouse has moved since
     // the last mousemove event
