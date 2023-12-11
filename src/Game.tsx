@@ -46,10 +46,9 @@ function Game({}: Props) {
     setGridDimensions({ width, height });
   };
 
-  const drawCell = (gridCell: GridCell, ctx: CanvasRenderingContext2D) => {
+  const setCellStyle = (gridCell: GridCell, ctx: CanvasRenderingContext2D) => {
     const cell: GameCell = gridCells[gridCell.y][gridCell.x];
     ctx.fillStyle = cell.alive ? "black" : "white";
-    ctx.fillRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
   };
 
   const runSimulation = () => {
@@ -109,7 +108,7 @@ function Game({}: Props) {
           gridCells={gridCells}
           onCellClicked={onCellClicked}
           onGridSizeChanged={onGridSizeChanged}
-          onCellWillBeDrawn={drawCell}
+          preCellDraw={setCellStyle}
         />
       </div>
       <div className='flex flex-row space-x-8 w-full p-4 bg-slate-400'>
@@ -140,7 +139,7 @@ function Game({}: Props) {
         <input
           id='simulation-delay-range'
           type='range'
-          min='10'
+          min='50'
           max='1000'
           value={simulationDelay}
           onChange={(e) => setSimulationDelay(Number(e.target.value))}
