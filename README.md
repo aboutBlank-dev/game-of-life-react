@@ -8,3 +8,4 @@ Simple implementation of Conway's Game of Life in using React. [More info](https
 - Different Grid Sizes
 - Infinite Scrollable Grid
 - Cells are simulated even when not in view
+- Uses Canvas for rendering because I like pain(and it's fast).
